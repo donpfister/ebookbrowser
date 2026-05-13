@@ -34,6 +34,10 @@
       margin: 0;
       line-height: 1.2;
     }
+    #masthead h1 a {
+      color: #f7f4ef;
+      text-decoration: none;
+    }
     #masthead-rule {
       border: none;
       border-top: 1px solid #555;
@@ -291,12 +295,25 @@
       min-height: 44px;
       line-height: 20px;
     }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    #footer {
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1px solid #ccc;
+      text-align: center;
+    }
+    #footer img {
+      height: 36px;
+      width: auto;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
 
 <div id="masthead">
-  <h1>Inkport</h1>
+  <h1><a href="/">Inkport</a></h1>
   <hr id="masthead-rule">
 </div>
 {% if feed_title %}<div id="feed-title">{{ feed_title }}</div>{% endif %}
@@ -376,6 +393,10 @@
   {% elif not error %}
     <p class="empty">No results found.</p>
   {% endif %}
+
+  <div id="footer">
+    <a href="https://ferncreek.digital/"><img src="https://ferncreek.digital/assets/brand_logo.png" alt="Fern Creek Digital"></a>
+  </div>
 
 </div><!-- /#wrap -->
 

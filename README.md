@@ -92,7 +92,7 @@ Log levels from quietest to loudest:
 
 ### Kobo downloads are slow to prompt
 
-The Kobo browser (WebKit 538.1) can take 30–60 seconds to show the "download this file?" prompt after tapping a format button. This is normal — the browser is old. The file is transferred in the background; wait for the prompt before assuming it failed.
+**Known issue (under investigation):** The first book download after loading the page can take up to 60 seconds before the Kobo shows the "download this file?" prompt. Subsequent downloads in the same session are typically faster. The file is transferred in the background — wait for the prompt before assuming it failed. This appears to be a Kobo WebKit 538.1 quirk and is being investigated.
 
 ### Downloads work on desktop but not Kobo
 
