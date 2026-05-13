@@ -98,9 +98,9 @@
   </table>
   {% endif %}
 
-  {% if next_path %}
+  {% if next_url %}
   <div id="pager">
-    <a href="{{ url_for('index', path=next_path, q=query or None) }}">Next &#187;</a>
+    <a href="{{ next_url }}">Next &#187;</a>
   </div>
   {% endif %}
 

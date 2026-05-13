@@ -1,7 +1,7 @@
 import os
-from urllib.parse import quote, unquote
+from urllib.parse import quote, unquote, urlparse
 import requests
-from flask import Flask, render_template, request, Response, stream_with_context, abort
+from flask import Flask, render_template, request, Response, stream_with_context, abort, url_for
 from xml.etree import ElementTree as ET
 
 app = Flask(__name__)
@@ -10,47 +10,71 @@ CWA_URL = os.environ.get('CWA_URL', 'http://localhost:8083').rstrip('/')
 CWA_USER = os.environ.get('CWA_USERNAME', '')
 CWA_PASS = os.environ.get('CWA_PASSWORD', '')
 SHOW_COVERS = os.environ.get('SHOW_COVERS', 'true').lower() == 'true'
+PAGE_SIZE = int(os.environ.get('PAGE_SIZE', '20'))
 
 ATOM = '{http://www.w3.org/2005/Atom}'
 MIME_TO_FORMAT = {
     'application/epub+zip': 'EPUB',
+    'application/kepub+zip': 'KEPUB',
     'application/x-mobipocket-ebook': 'MOBI',
     'application/pdf': 'PDF',
     'application/x-cbz': 'CBZ',
+    'application/x-cbr': 'CBR',
     'application/vnd.amazon.ebook': 'AZW',
     'application/x-fictionbook+xml': 'FB2',
 }
+KNOWN_FORMATS = {'EPUB', 'KEPUB', 'MOBI', 'PDF', 'CBZ', 'CBR', 'AZW', 'FB2', 'DJVU', 'ZIP'}
 
 
 def cwa_auth():
     return (CWA_USER, CWA_PASS) if CWA_USER else None
 
 
-def resolve_href(href):
+def extract_path(href):
+    """Return just the path (and query string) from a relative or absolute href."""
     if href.startswith(('http://', 'https://')):
-        return href
-    return CWA_URL + href
-
-
-def is_safe_href(href):
-    """Only allow proxying resources from the configured CWA server."""
-    url = resolve_href(href)
-    return url.startswith(CWA_URL + '/') or url == CWA_URL
-
-
-def is_safe_opds_path(path):
-    return bool(path) and path.startswith('/opds/')
+        p = urlparse(href)
+        return p.path + ('?' + p.query if p.query else '')
+    return href
 
 
 def encode_path(path):
-    """Normalize a URL path that may be partially or fully decoded/encoded."""
-    return quote(unquote(path), safe='/:@!$&\'()*+,;=')
+    """Normalize a URL path that may be partially decoded or encoded."""
+    return quote(unquote(path), safe='/:@!$&\'()*+,;=?')
+
+
+def cwa_url_for(href):
+    """Build a CWA request URL from any href (relative or absolute).
+
+    Absolute hrefs from the OPDS feed may carry a different hostname than
+    CWA_URL (e.g. the Pi-hole name vs 127.0.0.1). We always discard the
+    host and reconstruct via CWA_URL so requests route correctly.
+    """
+    return CWA_URL + encode_path(extract_path(href))
+
+
+def is_valid_href(href):
+    if not href:
+        return False
+    path = extract_path(href)
+    return path.startswith('/') and '..' not in path
+
+
+def detect_format(mimetype, href):
+    """Detect book format from the download URL path, falling back to MIME type.
+
+    Calibre-Web uses the same MIME type for EPUB and KEPUB, so the URL path
+    segment (e.g. /download/123/kepub) is the only reliable signal.
+    """
+    last_seg = extract_path(href).rstrip('/').rsplit('/', 1)[-1].upper()
+    if last_seg in KNOWN_FORMATS:
+        return last_seg
+    return MIME_TO_FORMAT.get(mimetype)
 
 
 def fetch_opds(path):
-    url = CWA_URL + encode_path(path)
     try:
-        r = requests.get(url, auth=cwa_auth(), timeout=15)
+        r = requests.get(CWA_URL + encode_path(path), auth=cwa_auth(), timeout=15)
         r.raise_for_status()
         return ET.fromstring(r.content), None
     except requests.RequestException as e:
@@ -60,10 +84,7 @@ def fetch_opds(path):
 
 
 def parse_feed(root):
-    """Return (entries, next_opds_path) from an OPDS Atom feed.
-
-    Each entry is {'type': 'book', ...} or {'type': 'nav', ...}.
-    """
+    """Return (entries, next_opds_path) from an OPDS Atom feed."""
     if root is None:
         return [], None
 
@@ -82,7 +103,7 @@ def parse_feed(root):
             elif 'opds-spec.org/image' in rel and not cover_href and href:
                 cover_href = href
             elif 'opds-spec.org/acquisition' in rel and href:
-                fmt = MIME_TO_FORMAT.get(ltype)
+                fmt = detect_format(ltype, href)
                 if fmt:
                     downloads.append({'format': fmt, 'href': href})
             elif rel == 'subsection' and href:
@@ -95,21 +116,18 @@ def parse_feed(root):
                 if a.findtext(ATOM + 'name')
             ]
             entries.append({
-                'type': 'book',
-                'title': title,
-                'authors': authors,
-                'cover_href': cover_href,
-                'downloads': downloads,
+                'type': 'book', 'title': title,
+                'authors': authors, 'cover_href': cover_href, 'downloads': downloads,
             })
         elif nav_href:
             entries.append({'type': 'nav', 'title': title, 'opds_path': nav_href})
 
-    next_path = next(
+    next_opds_path = next(
         (lnk.get('href') for lnk in root.findall(ATOM + 'link')
          if lnk.get('rel') == 'next'),
         None
     )
-    return entries, next_path
+    return entries, next_opds_path
 
 
 @app.route('/')
@@ -117,9 +135,13 @@ def index():
     query = request.args.get('q', '').strip()
     browse = request.args.get('browse', 'recent')
     path_param = request.args.get('path', '').strip()
+    try:
+        offset = max(0, int(request.args.get('offset', 0)))
+    except ValueError:
+        offset = 0
 
-    # Determine which OPDS feed to fetch
-    if path_param and is_safe_opds_path(path_param):
+    # Determine OPDS path to fetch
+    if path_param and path_param.startswith('/opds/'):
         opds = path_param
     elif query:
         opds = '/opds/search/' + quote(query, safe='')
@@ -131,13 +153,26 @@ def index():
         opds = '/opds/new'
 
     root, error = fetch_opds(opds)
-    entries, next_path = parse_feed(root)
+    all_entries, next_opds_path = parse_feed(root)
+
+    # Slice to current page
+    page_entries = all_entries[offset:offset + PAGE_SIZE]
+
+    # Build next-page URL
+    next_url = None
+    if offset + PAGE_SIZE < len(all_entries):
+        # More entries remain in this OPDS page
+        next_url = url_for('index', path=opds, offset=offset + PAGE_SIZE,
+                           q=query or None)
+    elif next_opds_path:
+        # Advance to the next OPDS page (offset resets to 0)
+        next_url = url_for('index', path=next_opds_path, q=query or None)
 
     return render_template('index.html',
-                           entries=entries,
+                           entries=page_entries,
                            query=query,
                            browse=browse,
-                           next_path=next_path,
+                           next_url=next_url,
                            show_covers=SHOW_COVERS,
                            error=error)
 
@@ -145,10 +180,10 @@ def index():
 @app.route('/cover')
 def cover():
     href = request.args.get('href', '')
-    if not href or not is_safe_href(href):
+    if not is_valid_href(href):
         abort(400)
     try:
-        r = requests.get(resolve_href(href), auth=cwa_auth(), timeout=10, stream=True)
+        r = requests.get(cwa_url_for(href), auth=cwa_auth(), timeout=10, stream=True)
         r.raise_for_status()
     except requests.RequestException:
         abort(404)
@@ -162,16 +197,14 @@ def cover():
 @app.route('/dl')
 def download():
     href = request.args.get('href', '')
-    if not href or not is_safe_href(href):
+    if not is_valid_href(href):
         abort(400)
     try:
-        r = requests.get(resolve_href(href), auth=cwa_auth(), timeout=120, stream=True)
+        r = requests.get(cwa_url_for(href), auth=cwa_auth(), timeout=120, stream=True)
         r.raise_for_status()
     except requests.RequestException:
         abort(502)
-    headers = {
-        'Content-Type': r.headers.get('Content-Type', 'application/octet-stream'),
-    }
+    headers = {'Content-Type': r.headers.get('Content-Type', 'application/octet-stream')}
     for h in ('Content-Disposition', 'Content-Length'):
         if h in r.headers:
             headers[h] = r.headers[h]
