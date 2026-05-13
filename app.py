@@ -61,14 +61,17 @@ def is_valid_href(href):
 
 
 def detect_format(mimetype, href):
-    """Detect book format from the download URL path, falling back to MIME type.
+    """Detect book format by scanning URL path segments right-to-left.
 
-    Calibre-Web uses the same MIME type for EPUB and KEPUB, so the URL path
-    segment (e.g. /download/123/kepub) is the only reliable signal.
+    CWA uses the same MIME type for EPUB and KEPUB, so the URL path is the
+    only reliable signal. urlparse correctly strips query strings for both
+    relative and absolute hrefs. Scanning right-to-left handles trailing
+    numeric IDs (e.g. /opds/download/123/kepub/0).
     """
-    last_seg = extract_path(href).rstrip('/').rsplit('/', 1)[-1].upper()
-    if last_seg in KNOWN_FORMATS:
-        return last_seg
+    path = urlparse(href).path
+    for seg in reversed(path.rstrip('/').split('/')):
+        if seg.upper() in KNOWN_FORMATS:
+            return seg.upper()
     return MIME_TO_FORMAT.get(mimetype)
 
 
