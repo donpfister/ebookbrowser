@@ -6,8 +6,9 @@ import requests
 from flask import Flask, render_template, request, Response, stream_with_context, abort, url_for
 from xml.etree import ElementTree as ET
 
+_log_level = getattr(logging, os.environ.get('LOG_LEVEL', 'WARNING').upper(), logging.WARNING)
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=_log_level,
     format='%(asctime)s %(levelname)s %(message)s',
     datefmt='%H:%M:%S',
 )

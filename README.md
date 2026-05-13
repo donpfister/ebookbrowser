@@ -61,6 +61,43 @@ Kobo's browser cannot render CWA's native web UI. This app consumes CWA's OPDS f
 | `SHOW_COVERS` | `true` | Show cover thumbnails. Disable for faster loads. |
 | `PAGE_SIZE` | `20` | Books shown per page. Lower values load faster on Kobo. |
 | `PORT` | `5000` | Port this app listens on. |
+| `LOG_LEVEL` | `WARNING` | Logging verbosity. See Troubleshooting below. |
+
+## Troubleshooting
+
+### Turning on detailed logs
+
+Set `LOG_LEVEL=DEBUG` in your `.env` file, then rebuild:
+
+```bash
+docker compose down && docker compose up -d --build
+```
+
+Stream logs in real time while reproducing the problem:
+
+```bash
+docker compose logs -f
+```
+
+`DEBUG` logs every HTTP request the app makes to CWA (including covers, downloads, and OPDS fetches) plus the full request/response details for the `/dl` route. This is noisy during normal use, which is why the default is `WARNING`.
+
+Log levels from quietest to loudest:
+
+| Level | What you see |
+|-------|-------------|
+| `WARNING` | Errors and rejections only (default) |
+| `INFO` | Download request summaries (remote IP, href, response size) |
+| `DEBUG` | Every CWA HTTP call including covers and OPDS pages |
+
+### Kobo downloads are slow to prompt
+
+The Kobo browser (WebKit 538.1) can take 30–60 seconds to show the "download this file?" prompt after tapping a format button. This is normal — the browser is old. The file is transferred in the background; wait for the prompt before assuming it failed.
+
+### Downloads work on desktop but not Kobo
+
+1. Set `LOG_LEVEL=DEBUG` and watch `docker compose logs -f` while tapping the download link on the Kobo.
+2. If you see a `DL request` line, the Kobo is reaching the server. Check the `DL sending` line for the response details.
+3. If you see no `DL request` line at all, the Kobo browser is not reaching the app — check your network/IP configuration.
 
 ## Updating
 
