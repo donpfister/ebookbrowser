@@ -1,9 +1,11 @@
+import io
 import logging
 import os
 import re
 from urllib.parse import quote, unquote, urlparse
 import requests
-from flask import Flask, render_template, request, Response, stream_with_context, abort, url_for
+from PIL import Image
+from flask import Flask, render_template, request, Response, abort, url_for
 from xml.etree import ElementTree as ET
 
 _log_level = getattr(logging, os.environ.get('LOG_LEVEL', 'WARNING').upper(), logging.WARNING)
@@ -21,6 +23,7 @@ CWA_USER = os.environ.get('CWA_USERNAME', '')
 CWA_PASS = os.environ.get('CWA_PASSWORD', '')
 SHOW_COVERS = os.environ.get('SHOW_COVERS', 'true').lower() == 'true'
 PAGE_SIZE = int(os.environ.get('PAGE_SIZE', '20'))
+COVER_WIDTH = int(os.environ.get('COVER_WIDTH', '60'))
 
 ATOM = '{http://www.w3.org/2005/Atom}'
 MIME_TO_FORMAT = {
@@ -196,15 +199,31 @@ def cover():
     if not is_valid_href(href):
         abort(400)
     try:
-        r = requests.get(cwa_url_for(href), auth=cwa_auth(), timeout=10, stream=True)
+        r = requests.get(cwa_url_for(href), auth=cwa_auth(), timeout=10)
         r.raise_for_status()
     except requests.RequestException:
         abort(404)
-    return Response(
-        stream_with_context(r.iter_content(8192)),
-        content_type=r.headers.get('Content-Type', 'image/jpeg'),
-        headers={'Cache-Control': 'public, max-age=86400'}
-    )
+
+    try:
+        img = Image.open(io.BytesIO(r.content))
+        # Resize proportionally to COVER_WIDTH, keeping colour.
+        new_height = int(img.height * COVER_WIDTH / img.width)
+        img = img.resize((COVER_WIDTH, new_height), Image.LANCZOS)
+        # JPEG doesn't support alpha; convert if needed.
+        if img.mode in ('RGBA', 'LA', 'P'):
+            img = img.convert('RGB')
+        buf = io.BytesIO()
+        img.save(buf, format='JPEG', quality=80, optimize=True)
+        data = buf.getvalue()
+        content_type = 'image/jpeg'
+    except Exception as e:
+        log.warning('Cover resize failed for %s: %s — sending original', href, e)
+        data = r.content
+        content_type = r.headers.get('Content-Type', 'image/jpeg')
+
+    return Response(data, content_type=content_type,
+                    headers={'Cache-Control': 'public, max-age=86400',
+                             'Content-Length': str(len(data))})
 
 
 @app.route('/dl')

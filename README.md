@@ -60,6 +60,7 @@ Kobo's browser cannot render CWA's native web UI. This app consumes CWA's OPDS f
 | `CWA_PASSWORD` | — | CWA password |
 | `SHOW_COVERS` | `true` | Show cover thumbnails. Disable for faster loads. |
 | `PAGE_SIZE` | `20` | Books shown per page. Lower values load faster on Kobo. |
+| `COVER_WIDTH` | `60` | Pixel width covers are resized to (height scales proportionally). Increase for a larger Kobo screen. |
 | `PORT` | `5000` | Port this app listens on. |
 | `LOG_LEVEL` | `WARNING` | Logging verbosity. See Troubleshooting below. |
 
