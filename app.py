@@ -28,6 +28,10 @@ COVER_WIDTH = int(os.environ.get('COVER_WIDTH', '60'))
 ATOM = '{http://www.w3.org/2005/Atom}'
 DC   = '{http://purl.org/dc/elements/1.1/}'
 DCTERMS = '{http://purl.org/dc/terms/}'
+
+# In-memory cache of full book metadata keyed by book_id, populated on list loads.
+# Sufficient for a single-user Kobo app where the list page is always visited first.
+_book_cache: dict = {}
 MIME_TO_FORMAT = {
     'application/epub+zip': 'EPUB',
     'application/kepub+zip': 'KEPUB',
@@ -141,11 +145,31 @@ def parse_feed(root):
                 book_id = next((p for p in reversed(path.rstrip('/').split('/')) if p.isdigit()), None)
                 if book_id:
                     break
-            entries.append({
+
+            summary = (entry.findtext(ATOM + 'summary') or
+                       entry.findtext(ATOM + 'content') or '').strip()
+            tags = [
+                c.get('label') or c.get('term', '')
+                for c in entry.findall(ATOM + 'category')
+                if c.get('term')
+            ]
+            published = (entry.findtext(ATOM + 'published') or
+                         entry.findtext(DC + 'date') or
+                         entry.findtext(DCTERMS + 'date') or '')
+            year = published[:4] if published else ''
+            publisher = (entry.findtext(DC + 'publisher') or
+                         entry.findtext(DCTERMS + 'publisher') or '')
+
+            book_data = {
                 'type': 'book', 'title': title,
                 'authors': authors, 'cover_href': cover_href,
                 'downloads': downloads, 'book_id': book_id,
-            })
+                'summary': summary, 'tags': tags,
+                'year': year, 'publisher': publisher,
+            }
+            if book_id:
+                _book_cache[book_id] = book_data
+            entries.append(book_data)
         elif nav_href:
             entries.append({'type': 'nav', 'title': title, 'opds_path': nav_href})
 
@@ -305,53 +329,6 @@ def download():
     )
 
 
-def parse_book_entry(entry):
-    """Parse a single Atom <entry> element into a full book detail dict."""
-    title = entry.findtext(ATOM + 'title') or '(untitled)'
-
-    authors = [
-        a.findtext(ATOM + 'name')
-        for a in entry.findall(ATOM + 'author')
-        if a.findtext(ATOM + 'name')
-    ]
-
-    summary = (entry.findtext(ATOM + 'summary') or
-               entry.findtext(ATOM + 'content') or '').strip()
-
-    tags = [
-        c.get('label') or c.get('term', '')
-        for c in entry.findall(ATOM + 'category')
-        if c.get('term')
-    ]
-
-    published = (entry.findtext(ATOM + 'published') or
-                 entry.findtext(DC + 'date') or
-                 entry.findtext(DCTERMS + 'date') or '')
-    year = published[:4] if published else ''
-
-    publisher = (entry.findtext(DC + 'publisher') or
-                 entry.findtext(DCTERMS + 'publisher') or '')
-
-    downloads, cover_href = [], None
-    for link in entry.findall(ATOM + 'link'):
-        rel = link.get('rel', '')
-        href = link.get('href', '')
-        ltype = link.get('type', '')
-        if 'opds-spec.org/image/thumbnail' in rel and href:
-            cover_href = href
-        elif 'opds-spec.org/image' in rel and not cover_href and href:
-            cover_href = href
-        elif 'opds-spec.org/acquisition' in rel and href:
-            fmt = detect_format(ltype, href)
-            if fmt:
-                downloads.append({'format': fmt, 'href': href})
-
-    return {
-        'title': title, 'authors': authors, 'summary': summary,
-        'tags': tags, 'year': year, 'publisher': publisher,
-        'cover_href': cover_href, 'downloads': downloads,
-    }
-
 
 @app.route('/book')
 def book_detail():
@@ -360,17 +337,8 @@ def book_detail():
         abort(400)
 
     back_url = request.args.get('back', '/')
-
-    root, error = fetch_opds(f'/opds/entry/{book_id}')
-    book = None
-    if root is not None:
-        # CWA may return a bare <entry> or a <feed> containing one entry
-        if root.tag == ATOM + 'entry':
-            book = parse_book_entry(root)
-        else:
-            entry = root.find(ATOM + 'entry')
-            if entry is not None:
-                book = parse_book_entry(entry)
+    book = _book_cache.get(book_id)
+    error = None if book else 'Book details not available — please go back to the list and try again.'
 
     return render_template('book.html', book=book, back_url=back_url, error=error)
 
