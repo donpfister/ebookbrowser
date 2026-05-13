@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Library</title>
+  <style>
+    body  { font-family: sans-serif; margin: 0; padding: 6px; background: #fff; color: #000; }
+    h1    { font-size: 1.3em; margin: 0 0 6px 0; }
+
+    form  { margin: 0 0 6px 0; }
+    input[type=text]   { font-size: 1em; padding: 4px; width: 62%; }
+    input[type=submit] { font-size: 1em; padding: 4px 10px; }
+    a.clr { margin-left: 8px; font-size: 0.9em; }
+
+    #tabs     { margin: 0 0 8px 0; border-bottom: 1px solid #999; padding-bottom: 4px; }
+    #tabs a   { margin-right: 14px; text-decoration: none; font-size: 1em; color: #000; }
+    #tabs a.on { font-weight: bold; text-decoration: underline; }
+
+    table   { width: 100%; border-collapse: collapse; }
+    tr      { border-bottom: 1px solid #ccc; }
+    td      { padding: 5px 4px; vertical-align: top; }
+    td.cov  { width: 65px; }
+    td.cov img { display: block; }
+
+    .ttl  { font-weight: bold; font-size: 1em; }
+    .aut  { color: #444; font-size: 0.9em; margin-top: 2px; }
+    .dls  { margin-top: 5px; }
+    a.dlb {
+      display: inline-block; padding: 4px 10px; margin: 0 4px 2px 0;
+      border: 1px solid #555; text-decoration: none; font-size: 0.85em; color: #000;
+    }
+
+    #navlist    { list-style: none; padding: 0; margin: 0; }
+    #navlist li { border-bottom: 1px solid #ccc; }
+    #navlist li a { display: block; padding: 10px 4px; font-size: 1em; text-decoration: none; color: #000; }
+
+    #pager { padding: 10px 0 4px 0; font-size: 1.1em; text-align: right; }
+
+    .err { color: #c00; }
+  </style>
+</head>
+<body>
+
+<h1>Library</h1>
+
+<form method="get" action="/">
+  <input type="text" name="q" value="{{ query }}" placeholder="Search title or author">
+  <input type="submit" value="Search">
+  {% if query %}<a class="clr" href="/">&#x2715; Clear</a>{% endif %}
+</form>
+
+{% if not query %}
+<div id="tabs">
+  <a href="/" class="{{ 'on' if browse == 'recent' else '' }}">Recent</a>
+  <a href="/?browse=authors" class="{{ 'on' if browse == 'authors' else '' }}">Authors</a>
+  <a href="/?browse=series" class="{{ 'on' if browse == 'series' else '' }}">Series</a>
+</div>
+{% endif %}
+
+{% if error %}
+  <p class="err">Could not reach library: {{ error }}</p>
+{% endif %}
+
+{% if entries %}
+
+  {% if entries[0].type == 'nav' %}
+  <ul id="navlist">
+    {% for e in entries %}
+    <li><a href="{{ url_for('index', path=e.opds_path) }}">{{ e.title }}</a></li>
+    {% endfor %}
+  </ul>
+
+  {% else %}
+  <table>
+    {% for book in entries %}
+    <tr>
+      {% if show_covers %}
+      <td class="cov">
+        {% if book.cover_href %}
+        <img src="{{ url_for('cover', href=book.cover_href) }}" width="60" alt="">
+        {% endif %}
+      </td>
+      {% endif %}
+      <td>
+        <div class="ttl">{{ book.title }}</div>
+        {% if book.authors %}
+        <div class="aut">{{ book.authors | join(', ') }}</div>
+        {% endif %}
+        <div class="dls">
+          {% for dl in book.downloads %}
+          <a class="dlb" href="{{ url_for('download', href=dl.href) }}">{{ dl.format }}</a>
+          {% endfor %}
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
+  {% if next_path %}
+  <div id="pager">
+    <a href="{{ url_for('index', path=next_path, q=query or None) }}">Next &#187;</a>
+  </div>
+  {% endif %}
+
+{% elif not error %}
+  <p>No results found.</p>
+{% endif %}
+
+</body>
+</html>
