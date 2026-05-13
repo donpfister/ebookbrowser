@@ -219,6 +219,9 @@ def index():
         # Advance to the next OPDS page (offset resets to 0)
         next_url = url_for('index', path=next_opds_path, q=query or None)
 
+    # Use a relative back URL (path+query only) so port is never involved.
+    back_url = request.full_path.rstrip('?')
+
     return render_template('index.html',
                            entries=page_entries,
                            query=query,
@@ -226,6 +229,7 @@ def index():
                            next_url=next_url,
                            show_covers=SHOW_COVERS,
                            feed_title=feed_title,
+                           back_url=back_url,
                            error=error)
 
 
