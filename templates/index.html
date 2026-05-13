@@ -5,50 +5,191 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Library</title>
   <style>
-    body  { font-family: sans-serif; margin: 0; padding: 6px; background: #fff; color: #000; }
-    h1    { font-size: 1.3em; margin: 0 0 6px 0; }
-
-    form  { margin: 0 0 6px 0; }
-    input[type=text]   { font-size: 1em; padding: 4px; width: 62%; }
-    input[type=submit] { font-size: 1em; padding: 4px 10px; }
-    a.clr { margin-left: 8px; font-size: 0.9em; }
-
-    #tabs     { margin: 0 0 8px 0; border-bottom: 1px solid #999; padding-bottom: 4px; }
-    #tabs a   { margin-right: 14px; text-decoration: none; font-size: 1em; color: #000; }
-    #tabs a.on { font-weight: bold; text-decoration: underline; }
-
-    table   { width: 100%; border-collapse: collapse; }
-    tr      { border-bottom: 1px solid #ccc; }
-    td      { padding: 5px 4px; vertical-align: top; }
-    td.cov  { width: 65px; }
-    td.cov img { display: block; }
-
-    .ttl  { font-weight: bold; font-size: 1em; }
-    .aut  { color: #444; font-size: 0.9em; margin-top: 2px; }
-    .dls  { margin-top: 5px; }
-    a.dlb {
-      display: inline-block; padding: 4px 10px; margin: 0 4px 2px 0;
-      border: 1px solid #555; text-decoration: none; font-size: 0.85em; color: #000;
+    body {
+      margin: 0; padding: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 17px;
+      line-height: 1.5;
+      background: #F8F7F2;
+      color: #1C1C1C;
     }
 
-    #navlist    { list-style: none; padding: 0; margin: 0; }
-    #navlist li { border-bottom: 1px solid #ccc; }
-    #navlist li a { display: block; padding: 10px 4px; font-size: 1em; text-decoration: none; color: #000; }
+    /* ── Header ── */
+    #hdr {
+      background: #1C1C1C;
+      padding: 12px 14px 14px;
+      border-bottom: 3px solid #8B0000;
+    }
+    #hdr h1 {
+      margin: 0 0 11px 0;
+      font-size: 0.7em;
+      font-weight: bold;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: #F8F7F2;
+    }
+    #hdr form { margin: 0; }
+    table.sf { width: 100%; border-collapse: collapse; }
+    table.sf td { padding: 0; vertical-align: middle; }
+    table.sf td.sb { width: 1%; white-space: nowrap; padding-left: 6px; }
+    input[type=text] {
+      width: 100%;
+      font-family: Georgia, serif;
+      font-size: 1em;
+      padding: 9px 10px;
+      border: 1px solid #555;
+      background: #2C2C2C;
+      color: #F0EFE8;
+    }
+    input[type=submit] {
+      font-family: Georgia, serif;
+      font-size: 0.9em;
+      padding: 9px 16px;
+      background: #8B0000;
+      color: #F8F7F2;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    a.clr {
+      display: inline-block;
+      color: #777;
+      font-size: 0.78em;
+      text-decoration: none;
+      padding-top: 6px;
+      letter-spacing: 0.05em;
+    }
 
-    #pager { padding: 10px 0 4px 0; font-size: 1.1em; text-align: right; }
+    /* ── Tab navigation ── */
+    #tabs {
+      background: #ECEAE0;
+      border-bottom: 2px solid #1C1C1C;
+      padding: 0;
+    }
+    #tabs a {
+      display: inline-block;
+      padding: 13px 22px;
+      font-family: Georgia, serif;
+      font-size: 0.8em;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #666;
+      border-right: 1px solid #CCC;
+    }
+    #tabs a.on {
+      background: #1C1C1C;
+      color: #F8F7F2;
+      font-weight: bold;
+    }
 
-    .err { color: #c00; }
+    /* ── Book table ── */
+    #books { width: 100%; border-collapse: collapse; }
+    #books tr { border-bottom: 1px solid #D8D5C8; }
+    #books tr:first-child { border-top: 1px solid #D8D5C8; }
+    #books td.cov {
+      width: 80px;
+      padding: 12px 6px 12px 12px;
+      vertical-align: top;
+    }
+    #books td.cov img {
+      display: block;
+      border: 1px solid #C8C5B8;
+    }
+    #books td.inf {
+      padding: 12px 12px 12px 6px;
+      vertical-align: top;
+    }
+    .ttl {
+      font-size: 1em;
+      font-weight: bold;
+      color: #1C1C1C;
+      line-height: 1.3;
+      margin-bottom: 2px;
+    }
+    .aut {
+      font-size: 0.82em;
+      color: #666;
+      font-style: italic;
+      margin-bottom: 9px;
+    }
+    a.dlb {
+      display: inline-block;
+      padding: 5px 12px;
+      margin: 0 5px 5px 0;
+      background: #1C1C1C;
+      color: #F8F7F2;
+      text-decoration: none;
+      font-family: Verdana, Geneva, sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    /* ── Nav list (authors / series) ── */
+    #navlist { list-style: none; padding: 0; margin: 0; }
+    #navlist li { border-bottom: 1px solid #D8D5C8; }
+    #navlist li:first-child { border-top: 1px solid #D8D5C8; }
+    #navlist li a {
+      display: block;
+      padding: 15px 14px;
+      font-family: Georgia, serif;
+      font-size: 1em;
+      color: #1C1C1C;
+      text-decoration: none;
+    }
+    #navlist li a span.arr {
+      float: right;
+      color: #8B0000;
+      font-style: normal;
+    }
+
+    /* ── Pagination ── */
+    #pager {
+      padding: 14px 14px;
+      text-align: right;
+      border-top: 2px solid #1C1C1C;
+    }
+    #pager a {
+      display: inline-block;
+      padding: 11px 24px;
+      background: #1C1C1C;
+      color: #F8F7F2;
+      text-decoration: none;
+      font-family: Georgia, serif;
+      font-size: 0.88em;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── States ── */
+    .err {
+      margin: 14px;
+      padding: 11px 14px;
+      background: #FFF0F0;
+      border-left: 4px solid #8B0000;
+      color: #8B0000;
+      font-size: 0.88em;
+    }
+    .empty {
+      padding: 40px 14px;
+      text-align: center;
+      color: #999;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
 
-<h1>Library</h1>
-
-<form method="get" action="/">
-  <input type="text" name="q" value="{{ query }}" placeholder="Search title or author">
-  <input type="submit" value="Search">
-  {% if query %}<a class="clr" href="/">&#x2715; Clear</a>{% endif %}
-</form>
+<div id="hdr">
+  <h1>Library</h1>
+  <form method="get" action="/">
+    <table class="sf"><tr>
+      <td><input type="text" name="q" value="{{ query }}" placeholder="Search title or author&hellip;"></td>
+      <td class="sb"><input type="submit" value="Search"></td>
+    </tr></table>
+    {% if query %}<a class="clr" href="/">&#x2715; Clear search</a>{% endif %}
+  </form>
+</div>
 
 {% if not query %}
 <div id="tabs">
@@ -59,7 +200,7 @@
 {% endif %}
 
 {% if error %}
-  <p class="err">Could not reach library: {{ error }}</p>
+<div class="err">Could not reach library: {{ error }}</div>
 {% endif %}
 
 {% if entries %}
@@ -67,12 +208,12 @@
   {% if entries[0].type == 'nav' %}
   <ul id="navlist">
     {% for e in entries %}
-    <li><a href="{{ url_for('index', path=e.opds_path) }}">{{ e.title }}</a></li>
+    <li><a href="{{ url_for('index', path=e.opds_path) }}">{{ e.title }}<span class="arr">&#8250;</span></a></li>
     {% endfor %}
   </ul>
 
   {% else %}
-  <table>
+  <table id="books">
     {% for book in entries %}
     <tr>
       {% if show_covers %}
@@ -82,16 +223,14 @@
         {% endif %}
       </td>
       {% endif %}
-      <td>
+      <td class="inf">
         <div class="ttl">{{ book.title }}</div>
         {% if book.authors %}
         <div class="aut">{{ book.authors | join(', ') }}</div>
         {% endif %}
-        <div class="dls">
-          {% for dl in book.downloads %}
-          <a class="dlb" href="{{ url_for('download', href=dl.href) }}">{{ dl.format }}</a>
-          {% endfor %}
-        </div>
+        {% for dl in book.downloads %}
+        <a class="dlb" href="{{ url_for('download', href=dl.href) }}">{{ dl.format }}</a>
+        {% endfor %}
       </td>
     </tr>
     {% endfor %}
@@ -100,12 +239,12 @@
 
   {% if next_url %}
   <div id="pager">
-    <a href="{{ next_url }}">Next &#187;</a>
+    <a href="{{ next_url }}">Next &rarr;</a>
   </div>
   {% endif %}
 
 {% elif not error %}
-  <p>No results found.</p>
+<p class="empty">No results found.</p>
 {% endif %}
 
 </body>
