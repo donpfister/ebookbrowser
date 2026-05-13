@@ -241,6 +241,10 @@
       color: #111;
       margin-bottom: 3px;
     }
+    .ttl a {
+      color: #111;
+      text-decoration: none;
+    }
     .aut {
       font-family: Verdana, Tahoma, sans-serif;
       font-size: 0.78em;
@@ -364,12 +368,18 @@
         {% if show_covers %}
         <td class="cov">
           {% if book.cover_href %}
+          {% if book.book_id %}<a href="{{ url_for('book_detail', id=book.book_id, back=request.url) }}">{% endif %}
           <img src="{{ url_for('cover', href=book.cover_href) }}" width="62" alt="">
+          {% if book.book_id %}</a>{% endif %}
           {% endif %}
         </td>
         {% endif %}
         <td>
-          <div class="ttl">{{ book.title }}</div>
+          <div class="ttl">
+            {% if book.book_id %}<a href="{{ url_for('book_detail', id=book.book_id, back=request.url) }}">{% endif %}
+            {{ book.title }}
+            {% if book.book_id %}</a>{% endif %}
+          </div>
           {% if book.authors %}
           <div class="aut">{{ book.authors | join(', ') }}</div>
           {% endif %}

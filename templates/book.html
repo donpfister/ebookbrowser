@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=758, initial-scale=1">
+  <title>{% if book %}{{ book.title }} — {% endif %}Inkport</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 16px;
+      line-height: 1.5;
+      background: #f7f4ef;
+      color: #111;
+      padding: 0;
+    }
+
+    /* ── Masthead ─────────────────────────────────────────────── */
+    #masthead {
+      border-top: 4px solid #111;
+      border-bottom: 1px solid #111;
+      padding: 10px 16px 8px 16px;
+      background: #111;
+    }
+    #masthead h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.7em;
+      font-weight: bold;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #f7f4ef;
+      margin: 0;
+      line-height: 1.2;
+    }
+    #masthead h1 a {
+      color: #f7f4ef;
+      text-decoration: none;
+    }
+    #masthead-rule {
+      border: none;
+      border-top: 1px solid #555;
+      margin: 5px 0 0 0;
+    }
+
+    /* ── Page body wrapper ────────────────────────────────────── */
+    #wrap {
+      padding: 12px 16px 24px 16px;
+    }
+
+    /* ── Back link ────────────────────────────────────────────── */
+    #back {
+      display: block;
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.82em;
+      color: #555;
+      text-decoration: none;
+      padding: 10px 0 12px 0;
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 18px;
+    }
+
+    /* ── Book detail layout ───────────────────────────────────── */
+    #book-header {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+    }
+    #book-header td {
+      vertical-align: top;
+      padding: 0;
+      border: none;
+    }
+    #book-header td.cover-col {
+      width: 110px;
+      padding-right: 16px;
+    }
+    #book-header td.cover-col img {
+      display: block;
+      border: 1px solid #ccc;
+      width: 100px;
+      height: auto;
+    }
+
+    /* ── Title & authors ──────────────────────────────────────── */
+    .book-title {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.3em;
+      font-weight: bold;
+      line-height: 1.3;
+      color: #111;
+      margin-bottom: 6px;
+    }
+    .book-authors {
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.82em;
+      color: #555;
+      margin-bottom: 10px;
+    }
+
+    /* ── Metadata (publisher, year) ───────────────────────────── */
+    .book-meta {
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.78em;
+      color: #777;
+      margin-bottom: 6px;
+      line-height: 1.6;
+    }
+
+    /* ── Download buttons ─────────────────────────────────────── */
+    .dls {
+      margin-top: 10px;
+    }
+    a.dlb {
+      display: inline-block;
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.78em;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #111;
+      background: #f7f4ef;
+      border: 1px solid #777;
+      padding: 9px 14px;
+      margin: 0 6px 6px 0;
+      min-height: 40px;
+      line-height: 20px;
+    }
+    a.dlb:active {
+      background: #111;
+      color: #f7f4ef;
+    }
+
+    /* ── Description ──────────────────────────────────────────── */
+    #description {
+      margin-top: 4px;
+      padding-top: 16px;
+      border-top: 1px solid #ccc;
+    }
+    #description h2 {
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.75em;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    #description p {
+      font-size: 0.97em;
+      line-height: 1.6;
+      color: #222;
+    }
+
+    /* ── Tags ─────────────────────────────────────────────────── */
+    #tags {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid #ccc;
+    }
+    #tags h2 {
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.75em;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .tag {
+      display: inline-block;
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.75em;
+      color: #555;
+      border: 1px solid #bbb;
+      padding: 3px 8px;
+      margin: 0 4px 4px 0;
+      background: #eeeae3;
+    }
+
+    /* ── Error ────────────────────────────────────────────────── */
+    .err {
+      background: #111;
+      color: #f7f4ef;
+      padding: 12px 14px;
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.88em;
+      margin-bottom: 14px;
+      border-left: 4px solid #c00;
+    }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    #footer {
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1px solid #ccc;
+      text-align: center;
+    }
+    #footer img {
+      height: 36px;
+      width: auto;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+<div id="masthead">
+  <h1><a href="/">Inkport</a></h1>
+  <hr id="masthead-rule">
+</div>
+
+<div id="wrap">
+
+  <a id="back" href="{{ back_url }}">&#8592; Back</a>
+
+  {% if error %}
+    <p class="err">Could not load book: {{ error }}</p>
+  {% endif %}
+
+  {% if book %}
+
+  <table id="book-header">
+    <tr>
+      {% if book.cover_href %}
+      <td class="cover-col">
+        <img src="{{ url_for('cover', href=book.cover_href) }}" alt="">
+      </td>
+      {% endif %}
+      <td>
+        <div class="book-title">{{ book.title }}</div>
+        {% if book.authors %}
+        <div class="book-authors">{{ book.authors | join(', ') }}</div>
+        {% endif %}
+        {% if book.publisher or book.year %}
+        <div class="book-meta">
+          {% if book.publisher %}{{ book.publisher }}{% endif %}
+          {% if book.publisher and book.year %} &middot; {% endif %}
+          {% if book.year %}{{ book.year }}{% endif %}
+        </div>
+        {% endif %}
+        <div class="dls">
+          {% for dl in book.downloads %}
+          <a class="dlb" href="{{ url_for('download', href=dl.href) }}">{{ dl.format }}</a>
+          {% endfor %}
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  {% if book.summary %}
+  <div id="description">
+    <h2>Description</h2>
+    <p>{{ book.summary }}</p>
+  </div>
+  {% endif %}
+
+  {% if book.tags %}
+  <div id="tags">
+    <h2>Tags</h2>
+    {% for tag in book.tags %}
+    <span class="tag">{{ tag }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% endif %}
+
+  <div id="footer">
+    <a href="https://ferncreek.digital/"><img src="https://ferncreek.digital/assets/brand_logo.png" alt="Fern Creek Digital"></a>
+  </div>
+
+</div><!-- /#wrap -->
+
+</body>
+</html>
