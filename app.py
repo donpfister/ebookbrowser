@@ -100,10 +100,11 @@ def fetch_opds(path):
 
 
 def parse_feed(root):
-    """Return (entries, next_opds_path) from an OPDS Atom feed."""
+    """Return (entries, next_opds_path, feed_title) from an OPDS Atom feed."""
     if root is None:
-        return [], None
+        return [], None, None
 
+    feed_title = root.findtext(ATOM + 'title')
     entries = []
     for entry in root.findall(ATOM + 'entry'):
         title = entry.findtext(ATOM + 'title') or '(untitled)'
@@ -143,7 +144,7 @@ def parse_feed(root):
          if lnk.get('rel') == 'next'),
         None
     )
-    return entries, next_opds_path
+    return entries, next_opds_path, feed_title
 
 
 @app.route('/')
@@ -169,7 +170,7 @@ def index():
         opds = '/opds/new'
 
     root, error = fetch_opds(opds)
-    all_entries, next_opds_path = parse_feed(root)
+    all_entries, next_opds_path, feed_title = parse_feed(root)
 
     # Slice to current page
     page_entries = all_entries[offset:offset + PAGE_SIZE]
@@ -190,6 +191,7 @@ def index():
                            browse=browse,
                            next_url=next_url,
                            show_covers=SHOW_COVERS,
+                           feed_title=feed_title,
                            error=error)
 
 

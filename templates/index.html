@@ -2,111 +2,382 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Library</title>
+  <meta name="viewport" content="width=758, initial-scale=1">
+  <title>Inkport</title>
   <style>
-    body  { font-family: sans-serif; margin: 0; padding: 6px; background: #fff; color: #000; }
-    h1    { font-size: 1.3em; margin: 0 0 6px 0; }
+    /* ── Reset & base ─────────────────────────────────────────── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    form  { margin: 0 0 6px 0; }
-    input[type=text]   { font-size: 1em; padding: 4px; width: 62%; }
-    input[type=submit] { font-size: 1em; padding: 4px 10px; }
-    a.clr { margin-left: 8px; font-size: 0.9em; }
-
-    #tabs     { margin: 0 0 8px 0; border-bottom: 1px solid #999; padding-bottom: 4px; }
-    #tabs a   { margin-right: 14px; text-decoration: none; font-size: 1em; color: #000; }
-    #tabs a.on { font-weight: bold; text-decoration: underline; }
-
-    table   { width: 100%; border-collapse: collapse; }
-    tr      { border-bottom: 1px solid #ccc; }
-    td      { padding: 5px 4px; vertical-align: top; }
-    td.cov  { width: 65px; }
-    td.cov img { display: block; }
-
-    .ttl  { font-weight: bold; font-size: 1em; }
-    .aut  { color: #444; font-size: 0.9em; margin-top: 2px; }
-    .dls  { margin-top: 5px; }
-    a.dlb {
-      display: inline-block; padding: 4px 10px; margin: 0 4px 2px 0;
-      border: 1px solid #555; text-decoration: none; font-size: 0.85em; color: #000;
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 16px;
+      line-height: 1.5;
+      background: #f7f4ef;
+      color: #111;
+      padding: 0;
     }
 
-    #navlist    { list-style: none; padding: 0; margin: 0; }
-    #navlist li { border-bottom: 1px solid #ccc; }
-    #navlist li a { display: block; padding: 10px 4px; font-size: 1em; text-decoration: none; color: #000; }
+    /* ── Masthead ─────────────────────────────────────────────── */
+    #masthead {
+      border-top: 4px solid #111;
+      border-bottom: 1px solid #111;
+      padding: 10px 16px 8px 16px;
+      background: #111;
+    }
+    #masthead h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.7em;
+      font-weight: bold;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #f7f4ef;
+      margin: 0;
+      line-height: 1.2;
+    }
+    #masthead-rule {
+      border: none;
+      border-top: 1px solid #555;
+      margin: 5px 0 0 0;
+    }
+    #feed-title {
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.78em;
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #888;
+      padding: 6px 16px 5px 16px;
+      background: #222;
+      border-bottom: 1px solid #444;
+    }
 
-    #pager { padding: 10px 0 4px 0; font-size: 1.1em; text-align: right; }
+    /* ── Page body wrapper ────────────────────────────────────── */
+    #wrap {
+      padding: 12px 16px 24px 16px;
+    }
 
-    .err { color: #c00; }
+    /* ── Search form ──────────────────────────────────────────── */
+    #searchbar {
+      margin: 0 0 14px 0;
+      padding: 10px 0 10px 0;
+      border-bottom: 1px solid #bbb;
+    }
+    #searchbar table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #searchbar td {
+      padding: 0;
+      vertical-align: middle;
+      border: none;
+    }
+    #searchbar td.s-input {
+      width: 75%;
+      padding-right: 6px;
+    }
+    #searchbar td.s-btn {
+      width: 25%;
+    }
+    input[type=text] {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1em;
+      padding: 10px 8px;
+      width: 100%;
+      background: #fff;
+      color: #111;
+      border: 1px solid #777;
+      border-radius: 0;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 44px;
+    }
+    input[type=submit] {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 0.92em;
+      font-weight: bold;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 10px 6px;
+      width: 100%;
+      background: #111;
+      color: #f7f4ef;
+      border: 1px solid #111;
+      border-radius: 0;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 44px;
+      cursor: pointer;
+    }
+    #clear-link {
+      display: block;
+      text-align: right;
+      margin-top: 6px;
+      font-size: 0.85em;
+      color: #555;
+      text-decoration: none;
+      font-family: Verdana, Tahoma, sans-serif;
+    }
+
+    /* ── Tab navigation ───────────────────────────────────────── */
+    #tabs {
+      margin: 0 0 14px 0;
+      border-bottom: 2px solid #111;
+      padding-bottom: 0;
+    }
+    #tabs table {
+      border-collapse: collapse;
+      width: auto;
+    }
+    #tabs td {
+      padding: 0;
+      border: none;
+      vertical-align: bottom;
+    }
+    .tab-link {
+      display: block;
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.82em;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #555;
+      background: #dedad3;
+      border: 1px solid #aaa;
+      border-bottom: none;
+      padding: 10px 20px;
+      margin-right: 3px;
+      min-height: 44px;
+      line-height: 24px;
+    }
+    .tab-link.on {
+      background: #111;
+      color: #f7f4ef;
+      border-color: #111;
+    }
+
+    /* ── Error ────────────────────────────────────────────────── */
+    .err {
+      background: #111;
+      color: #f7f4ef;
+      padding: 12px 14px;
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.88em;
+      margin-bottom: 14px;
+      border-left: 4px solid #c00;
+    }
+
+    /* ── Empty state ──────────────────────────────────────────── */
+    .empty {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1em;
+      color: #555;
+      font-style: italic;
+      padding: 20px 0;
+      border-top: 1px solid #ccc;
+    }
+
+    /* ── Nav list (authors / series) ──────────────────────────── */
+    #navlist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      border-top: 1px solid #bbb;
+    }
+    #navlist li {
+      border-bottom: 1px solid #ddd;
+    }
+    #navlist li a {
+      display: block;
+      padding: 13px 4px 13px 8px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1em;
+      text-decoration: none;
+      color: #111;
+      min-height: 44px;
+      line-height: 1.4;
+    }
+    #navlist li a:after {
+      content: " \00BB";
+      color: #888;
+      font-size: 0.9em;
+    }
+
+    /* ── Book table ───────────────────────────────────────────── */
+    table.books {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table.books tr {
+      border-bottom: 1px solid #ccc;
+    }
+    table.books tr:first-child {
+      border-top: 1px solid #bbb;
+    }
+    table.books td {
+      padding: 11px 6px 11px 0;
+      vertical-align: top;
+    }
+    table.books td.cov {
+      width: 72px;
+      padding-right: 10px;
+      padding-left: 0;
+    }
+    table.books td.cov img {
+      display: block;
+      border: 1px solid #ccc;
+    }
+
+    /* ── Book metadata ────────────────────────────────────────── */
+    .ttl {
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: bold;
+      font-size: 1.05em;
+      line-height: 1.35;
+      color: #111;
+      margin-bottom: 3px;
+    }
+    .aut {
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.78em;
+      color: #555;
+      margin-bottom: 9px;
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Download buttons ─────────────────────────────────────── */
+    .dls {
+      margin-top: 2px;
+    }
+    a.dlb {
+      display: inline-block;
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.72em;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #111;
+      background: #f7f4ef;
+      border: 1px solid #777;
+      padding: 7px 10px;
+      margin: 0 5px 5px 0;
+      min-height: 32px;
+      line-height: 18px;
+    }
+    a.dlb:active {
+      background: #111;
+      color: #f7f4ef;
+    }
+
+    /* ── Pager ────────────────────────────────────────────────── */
+    #pager {
+      padding: 16px 0 4px 0;
+      text-align: right;
+    }
+    #pager a {
+      display: inline-block;
+      font-family: Verdana, Tahoma, sans-serif;
+      font-size: 0.85em;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #f7f4ef;
+      background: #111;
+      border: 1px solid #111;
+      padding: 12px 22px;
+      min-height: 44px;
+      line-height: 20px;
+    }
   </style>
 </head>
 <body>
 
-<h1>Library</h1>
-
-<form method="get" action="/">
-  <input type="text" name="q" value="{{ query }}" placeholder="Search title or author">
-  <input type="submit" value="Search">
-  {% if query %}<a class="clr" href="/">&#x2715; Clear</a>{% endif %}
-</form>
-
-{% if not query %}
-<div id="tabs">
-  <a href="/" class="{{ 'on' if browse == 'recent' else '' }}">Recent</a>
-  <a href="/?browse=authors" class="{{ 'on' if browse == 'authors' else '' }}">Authors</a>
-  <a href="/?browse=series" class="{{ 'on' if browse == 'series' else '' }}">Series</a>
+<div id="masthead">
+  <h1>Inkport</h1>
+  <hr id="masthead-rule">
 </div>
-{% endif %}
+{% if feed_title %}<div id="feed-title">{{ feed_title }}</div>{% endif %}
 
-{% if error %}
-  <p class="err">Could not reach library: {{ error }}</p>
-{% endif %}
+<div id="wrap">
 
-{% if entries %}
+  <div id="searchbar">
+    <form method="get" action="/">
+      <table><tr>
+        <td class="s-input">
+          <input type="text" name="q" value="{{ query }}" placeholder="Search title or author&hellip;">
+        </td>
+        <td class="s-btn">
+          <input type="submit" value="Search">
+        </td>
+      </tr></table>
+      {% if query %}<a class="clr" id="clear-link" href="/">&#x2715; Clear search</a>{% endif %}
+    </form>
+  </div>
 
-  {% if entries[0].type == 'nav' %}
-  <ul id="navlist">
-    {% for e in entries %}
-    <li><a href="{{ url_for('index', path=e.opds_path) }}">{{ e.title }}</a></li>
-    {% endfor %}
-  </ul>
-
-  {% else %}
-  <table>
-    {% for book in entries %}
-    <tr>
-      {% if show_covers %}
-      <td class="cov">
-        {% if book.cover_href %}
-        <img src="{{ url_for('cover', href=book.cover_href) }}" width="60" alt="">
-        {% endif %}
-      </td>
-      {% endif %}
-      <td>
-        <div class="ttl">{{ book.title }}</div>
-        {% if book.authors %}
-        <div class="aut">{{ book.authors | join(', ') }}</div>
-        {% endif %}
-        <div class="dls">
-          {% for dl in book.downloads %}
-          <a class="dlb" href="{{ url_for('download', href=dl.href) }}">{{ dl.format }}</a>
-          {% endfor %}
-        </div>
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
-  {% endif %}
-
-  {% if next_url %}
-  <div id="pager">
-    <a href="{{ next_url }}">Next &#187;</a>
+  {% if not query %}
+  <div id="tabs">
+    <table><tr>
+      <td><a href="/" class="tab-link {{ 'on' if browse == 'recent' else '' }}">Recent</a></td>
+      <td><a href="/?browse=authors" class="tab-link {{ 'on' if browse == 'authors' else '' }}">Authors</a></td>
+      <td><a href="/?browse=series" class="tab-link {{ 'on' if browse == 'series' else '' }}">Series</a></td>
+    </tr></table>
   </div>
   {% endif %}
 
-{% elif not error %}
-  <p>No results found.</p>
-{% endif %}
+  {% if error %}
+    <p class="err">Could not reach library: {{ error }}</p>
+  {% endif %}
+
+  {% if entries %}
+
+    {% if entries[0].type == 'nav' %}
+    <ul id="navlist">
+      {% for e in entries %}
+      <li><a href="{{ url_for('index', path=e.opds_path) }}">{{ e.title }}</a></li>
+      {% endfor %}
+    </ul>
+
+    {% else %}
+    <table class="books">
+      {% for book in entries %}
+      <tr>
+        {% if show_covers %}
+        <td class="cov">
+          {% if book.cover_href %}
+          <img src="{{ url_for('cover', href=book.cover_href) }}" width="62" alt="">
+          {% endif %}
+        </td>
+        {% endif %}
+        <td>
+          <div class="ttl">{{ book.title }}</div>
+          {% if book.authors %}
+          <div class="aut">{{ book.authors | join(', ') }}</div>
+          {% endif %}
+          <div class="dls">
+            {% for dl in book.downloads %}
+            <a class="dlb" href="{{ url_for('download', href=dl.href) }}">{{ dl.format }}</a>
+            {% endfor %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
+    {% if next_url %}
+    <div id="pager">
+      <a href="{{ next_url }}">Next page &rarr;</a>
+    </div>
+    {% endif %}
+
+  {% elif not error %}
+    <p class="empty">No results found.</p>
+  {% endif %}
+
+</div><!-- /#wrap -->
 
 </body>
 </html>
