@@ -1,7 +1,6 @@
 services:
   ebookbrowser:
     build: .
-    ports:
-      - "5000:5000"
+    network_mode: host
     env_file: .env
     restart: unless-stopped
