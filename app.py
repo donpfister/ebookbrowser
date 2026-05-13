@@ -203,15 +203,34 @@ def download():
     if not is_valid_href(href):
         abort(400)
     try:
-        r = requests.get(cwa_url_for(href), auth=cwa_auth(), timeout=120, stream=True)
+        # Buffer the full response so we can set Content-Length and avoid
+        # chunked encoding, which Kobo's browser does not handle reliably.
+        r = requests.get(cwa_url_for(href), auth=cwa_auth(), timeout=120)
         r.raise_for_status()
     except requests.RequestException:
         abort(502)
-    headers = {'Content-Type': r.headers.get('Content-Type', 'application/octet-stream')}
-    for h in ('Content-Disposition', 'Content-Length'):
-        if h in r.headers:
-            headers[h] = r.headers[h]
-    return Response(stream_with_context(r.iter_content(65536)), headers=headers)
+
+    content_type = r.headers.get('Content-Type', 'application/octet-stream')
+
+    # Always force Content-Disposition: attachment so the Kobo browser treats
+    # the response as a file download rather than trying to render it.
+    disposition = r.headers.get('Content-Disposition', '')
+    if not disposition or 'attachment' not in disposition:
+        path = urlparse(href).path.rstrip('/')
+        fmt = path.rsplit('/', 1)[-1].lower()
+        # Kobo requires .kepub.epub extension to recognise and import KEPUB files.
+        ext = 'kepub.epub' if fmt == 'kepub' else (fmt if fmt else 'epub')
+        book_id = next((p for p in reversed(path.split('/')) if p.isdigit()), 'book')
+        disposition = f'attachment; filename="book-{book_id}.{ext}"'
+
+    return Response(
+        r.content,
+        content_type=content_type,
+        headers={
+            'Content-Disposition': disposition,
+            'Content-Length': str(len(r.content)),
+        }
+    )
 
 
 if __name__ == '__main__':
