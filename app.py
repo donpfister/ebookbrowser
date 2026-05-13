@@ -1,8 +1,16 @@
+import logging
 import os
 from urllib.parse import quote, unquote, urlparse
 import requests
 from flask import Flask, render_template, request, Response, stream_with_context, abort, url_for
 from xml.etree import ElementTree as ET
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s %(levelname)s %(message)s',
+    datefmt='%H:%M:%S',
+)
+log = logging.getLogger('ebookbrowser')
 
 app = Flask(__name__)
 
@@ -200,28 +208,42 @@ def cover():
 @app.route('/dl')
 def download():
     href = request.args.get('href', '')
+    log.info('DL request | remote=%s ua=%s href=%s',
+             request.remote_addr,
+             request.headers.get('User-Agent', '-'),
+             href)
+
     if not is_valid_href(href):
+        log.warning('DL rejected invalid href: %r', href)
         abort(400)
+
+    cwa_url = cwa_url_for(href)
+    log.info('DL fetching CWA url: %s', cwa_url)
+
     try:
-        # Buffer the full response so we can set Content-Length and avoid
-        # chunked encoding, which Kobo's browser does not handle reliably.
-        r = requests.get(cwa_url_for(href), auth=cwa_auth(), timeout=120)
+        r = requests.get(cwa_url, auth=cwa_auth(), timeout=120)
         r.raise_for_status()
-    except requests.RequestException:
+    except requests.RequestException as e:
+        log.error('DL CWA fetch failed: %s', e)
         abort(502)
+
+    log.info('DL CWA response: status=%s content-type=%s content-length=%s',
+             r.status_code,
+             r.headers.get('Content-Type'),
+             r.headers.get('Content-Length', f'{len(r.content)}B (buffered)'))
 
     content_type = r.headers.get('Content-Type', 'application/octet-stream')
 
-    # Always force Content-Disposition: attachment so the Kobo browser treats
-    # the response as a file download rather than trying to render it.
     disposition = r.headers.get('Content-Disposition', '')
     if not disposition or 'attachment' not in disposition:
         path = urlparse(href).path.rstrip('/')
         fmt = path.rsplit('/', 1)[-1].lower()
-        # Kobo requires .kepub.epub extension to recognise and import KEPUB files.
         ext = 'kepub.epub' if fmt == 'kepub' else (fmt if fmt else 'epub')
         book_id = next((p for p in reversed(path.split('/')) if p.isdigit()), 'book')
         disposition = f'attachment; filename="book-{book_id}.{ext}"'
+
+    log.info('DL sending to client: content-type=%s disposition=%s size=%d bytes',
+             content_type, disposition, len(r.content))
 
     return Response(
         r.content,
