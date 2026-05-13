@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from urllib.parse import quote, unquote, urlparse
 import requests
 from flask import Flask, render_template, request, Response, stream_with_context, abort, url_for
@@ -234,13 +235,30 @@ def download():
 
     content_type = r.headers.get('Content-Type', 'application/octet-stream')
 
-    disposition = r.headers.get('Content-Disposition', '')
-    if not disposition or 'attachment' not in disposition:
-        path = urlparse(href).path.rstrip('/')
-        fmt = path.rsplit('/', 1)[-1].lower()
-        ext = 'kepub.epub' if fmt == 'kepub' else (fmt if fmt else 'epub')
-        book_id = next((p for p in reversed(path.split('/')) if p.isdigit()), 'book')
-        disposition = f'attachment; filename="book-{book_id}.{ext}"'
+    # Determine correct file extension from the URL format segment.
+    # Kobo requires .kepub.epub (not .kepub) to auto-import KEPUB files.
+    url_path = urlparse(href).path.rstrip('/')
+    fmt = url_path.rsplit('/', 1)[-1].lower()
+    ext = 'kepub.epub' if fmt == 'kepub' else (fmt if fmt else 'epub')
+
+    # Parse the book title from CWA's Content-Disposition (preferred over a
+    # bare book-ID filename). CWA sends filename*=UTF-8''... (RFC 5987) and/or
+    # filename=URL-encoded-title.ext — try the RFC 5987 form first.
+    cwa_disp = r.headers.get('Content-Disposition', '')
+    basename = None
+    m = re.search(r"filename\*=UTF-8''([^;\s]+)", cwa_disp, re.IGNORECASE)
+    if m:
+        basename = unquote(m.group(1)).rsplit('.', 1)[0]
+    else:
+        m = re.search(r'filename=["\']?([^"\';\r\n]+)', cwa_disp)
+        if m:
+            basename = unquote(m.group(1).strip().strip('\'"')).rsplit('.', 1)[0]
+
+    if not basename:
+        book_id = next((p for p in reversed(url_path.split('/')) if p.isdigit()), 'book')
+        basename = f'book-{book_id}'
+
+    disposition = f'attachment; filename="{basename}.{ext}"'
 
     log.info('DL sending to client: content-type=%s disposition=%s size=%d bytes',
              content_type, disposition, len(r.content))
